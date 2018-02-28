@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
+
+	<xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes"/>
+	<xsl:template match="channel">
+		<xsl:element name="feed" namespace="http://purl.org/atom/ns#" >
+			<xsl:attribute name="version">0.3</xsl:attribute>
+			<xsl:element name="title" namespace="http://purl.org/atom/ns#">
+				<xsl:value-of select="*[local-name()='title']" />
+			</xsl:element>
+			<xsl:element name="tagline" namespace="http://purl.org/atom/ns#">
+				<xsl:value-of select="*[local-name()='description']" />
+			</xsl:element>
+			<xsl:apply-templates select="*[local-name()='link']" />
+			<xsl:apply-templates select="*[local-name()='item']" />
+		</xsl:element>
+	</xsl:template>
+	
+	<xsl:template match="link">
+		<xsl:element name="link" namespace="http://purl.org/atom/ns#">
+			<xsl:attribute name="rel" >alternate</xsl:attribute>
+			<xsl:attribute name="type" >text/html</xsl:attribute>
+			<xsl:attribute name="href" >
+				<xsl:value-of select="." />
+			</xsl:attribute>
+		</xsl:element>
+	</xsl:template>
+	
+	<xsl:template match="pubDate">
+		<xsl:variable name="x" select="."/>
+		<xsl:variable name="rfc822date">
+			<xsl:choose>
+				<xsl:when test="substring($x, 4, 1)=','">
+					<xsl:value-of select="substring($x, 6)"/>
+				</xsl:when>
+				<xsl:otherwise >
+					<xsl:value-of select="$x"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+
+		<xsl:variable name="y" select="$rfc822date"/>
+		<xsl:variable name="day">
+			<xsl:choose>
+				<xsl:when test="substring($y, 2, 1)=' '">
+					<xsl:value-of select="concat('0',substring($y, 1, 1))"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="substring($y, 1, 2)"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+
+		<xsl:variable name="rest">
+			<xsl:choose>
+				<xsl:when test="substring($y, 2, 1)=' '">
+					<xsl:value-of select="substring($y, 3)"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="substring($y, 4)"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+		
+		<xsl:variable name="month">
+			<xsl:choose>
+				<xsl:when test="substring($rest, 1, 3)='Jan'">
+					<xsl:text>-01-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Feb'">
+					<xsl:text>-02-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Mar'">
+					<xsl:text>-03-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Apr'">
+					<xsl:text>-04-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='May'">
+					<xsl:text>-05-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Jun'">
+					<xsl:text>-06-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Jul'">
+					<xsl:text>-07-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Aug'">
+					<xsl:text>-08-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Sep'">
+					<xsl:text>-09-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Oct'">
+					<xsl:text>-10-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Nov'">
+					<xsl:text>-11-</xsl:text>
+				</xsl:when>
+				<xsl:when test="substring($rest, 1, 3)='Dec'">
+					<xsl:text>-12-</xsl:text>
+				</xsl:when>
+			</xsl:choose>
+		</xsl:variable>
+				
+		<xsl:element name="modified" namespace="http://purl.org/atom/ns#">
+			<xsl:value-of select="concat(substring($rest, 5, 4),$month,$day,'T',substring($rest, 10, 8),'Z')" />
+		</xsl:element>
+		<xsl:element name="issues" namespace="http://purl.org/atom/ns#">
+			<xsl:value-of select="concat(substring($rest, 5, 4),$month,$day,'T',substring($rest, 10, 8),'Z')" />
+		</xsl:element>
+	</xsl:template>
+
+	<xsl:template match="item">
+		<xsl:element name="entry" namespace="http://purl.org/atom/ns#">
+			<xsl:element name="title" namespace="http://purl.org/atom/ns#">
+				<xsl:value-of select="*[local-name()='title']" />
+			</xsl:element>
+			<xsl:element name="id" namespace="http://purl.org/atom/ns#">
+				<xsl:value-of select="*[local-name()='link']" />
+			</xsl:element>
+			<xsl:apply-templates select="*[local-name()='link']" />
+			<xsl:apply-templates select="*[local-name()='pubDate']" />
+			<xsl:element name="content" namespace="http://purl.org/atom/ns#">
+				<xsl:attribute name="type" >text/html</xsl:attribute>
+				<xsl:attribute name="mode" >escaped</xsl:attribute>
+				<xsl:value-of select="*[local-name()='description']" />
+			</xsl:element>
+		</xsl:element>
+	</xsl:template>
+</xsl:stylesheet>
